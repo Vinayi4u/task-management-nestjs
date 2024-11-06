@@ -5,19 +5,26 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { TasksService } from './tasks.service';
-import { Task } from './task.module';
+import { Task, TaskStatus } from './task.module';
 import { CreateTaskDTO } from 'src/dto/create-task.dto';
+import { filterDTO } from 'src/dto/filter-tasks.dto';
 
 @Controller('tasks')
 export class TasksController {
   constructor(private tasksService: TasksService) {}
 
   @Get()
-  getAllTasks(): Task[] {
-    return this.tasksService.getAllTasks();
+  getAllTasks(@Query() filterDTO: filterDTO): Task[] {
+    if (Object.keys(filterDTO).length) {
+      return this.tasksService.getAllFilterTasks(filterDTO);
+    } else {
+      return this.tasksService.getAllTasks();
+    }
   }
 
   @Get('/:id')
@@ -37,5 +44,13 @@ export class TasksController {
       return new NotFoundException('Task Not Found!!!');
     }
     return this.tasksService.deleteTaskById(id);
+  }
+
+  @Patch('/:id/status')
+  updateTask(
+    @Param('id') id: string,
+    @Body('status') status: TaskStatus,
+  ): Task {
+    return this.tasksService.updateTaskById(id, status);
   }
 }
